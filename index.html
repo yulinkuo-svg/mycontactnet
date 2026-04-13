@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MyContactNet">
 <title>MyContactNet</title>
@@ -642,6 +643,7 @@ function importVcf(input){
   reader.onload=async(e)=>{
     const text=e.target.result;
     const cards=text.split(/BEGIN:VCARD/i).filter(s=>s.includes('END:VCARD'));
+    console.log('VCF cards found:', cards.length);
     resultEl.textContent=`解析中，共 ${cards.length} 筆…`;
 
     // Step 1: Parse all VCF cards into rows (pure JS, instant)
@@ -669,6 +671,7 @@ function importVcf(input){
       parsed++;
     }
 
+    console.log('Rows parsed:', rows.length, rows[0]);
     resultEl.textContent=`解析完成 ${rows.length} 筆，開始寫入…`;
 
     // Step 2: Write in chunks of 100, with retry on failure

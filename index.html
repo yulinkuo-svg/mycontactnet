@@ -72,8 +72,8 @@
   .detail-name{font-size:18px;font-weight:700;}
   .detail-nickname{font-size:12px;color:var(--text3);}
   .detail-sub{font-size:13px;color:var(--text2);}
-  .detail-actions{display:flex;gap:16px;margin-top:4px;}
-  .detail-action-btn{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--text2);cursor:pointer;background:none;border:none;}
+  .detail-actions{display:flex;background:var(--bg2);border-top:1px solid var(--border);padding:10px 0;padding-bottom:calc(10px + env(safe-area-inset-bottom));flex-shrink:0;}
+  .detail-action-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--text2);cursor:pointer;background:none;border:none;}
   .detail-action-icon{width:40px;height:40px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;}
   .detail-action-icon.line{background:#00B900;}
   .detail-body{flex:1;overflow-y:auto;}
@@ -117,7 +117,7 @@
 <div id="app">
   <div id="tab-contacts" style="display:flex;flex-direction:column;height:100%">
     <div class="topbar">
-      <span class="topbar-title">聯絡人</span>
+      <span class="topbar-title" id="contacts-title">聯絡人</span>
       <button class="topbar-btn" onclick="checkDuplicates()" title="檢查重複">⚠️</button>
       <div style="position:relative;">
         <button class="topbar-btn accent" onclick="toggleAddMenu(event)">＋</button>
@@ -285,11 +285,6 @@
     <div class="detail-name" id="detail-name"></div>
     <div class="detail-nickname" id="detail-nickname"></div>
     <div class="detail-sub" id="detail-sub"></div>
-    <div class="detail-actions">
-      <button class="detail-action-btn" onclick="callContact()"><div class="detail-action-icon">📞</div>電話</button>
-      <button class="detail-action-btn" onclick="mailContact()"><div class="detail-action-icon">✉️</div>Email</button>
-      <button class="detail-action-btn" onclick="lineContact()"><div class="detail-action-icon line">💬</div>LINE</button>
-    </div>
   </div>
   <div class="detail-body">
     <div class="detail-section" id="detail-fields"></div>
@@ -297,6 +292,11 @@
       <div class="detail-section-title">備註</div>
       <div id="detail-notes" style="font-size:14px;color:var(--text2);line-height:1.6;"></div>
     </div>
+  </div>
+  <div class="detail-actions">
+    <button class="detail-action-btn" onclick="callContact()"><div class="detail-action-icon">📞</div>電話</button>
+    <button class="detail-action-btn" onclick="mailContact()"><div class="detail-action-icon">✉️</div>Email</button>
+    <button class="detail-action-btn" onclick="lineContact()"><div class="detail-action-icon line">💬</div>LINE</button>
   </div>
 </div>
 
@@ -364,6 +364,12 @@ function showApp(){
   document.getElementById('user-name').textContent=u.name||'';
   document.getElementById('user-email').textContent=u.email||'';
   document.getElementById('sheet-id-display').textContent=SHEET_ID;
+  // Set personalized title: last word of name + "'s 聯絡人"
+  if(u.name){
+    const parts=u.name.trim().split(/\s+/);
+    const lastName=parts[parts.length-1];
+    document.getElementById('contacts-title').textContent=`${lastName}'s 聯絡人`;
+  }
 }
 
 function signOut(){google.accounts.id.disableAutoSelect();sessionStorage.clear();location.reload();}
@@ -485,7 +491,7 @@ function updateStats(){
   document.getElementById('settings-count').textContent=contacts.length+' 位聯絡人';
 }
 
-function isBirthdaySoon(birthday,days=7){
+function isBirthdaySoon(birthday,days=14){
   if(!birthday)return false;
   const today=new Date();const parts=birthday.split('-');
   if(parts.length<3)return false;
@@ -495,14 +501,26 @@ function isBirthdaySoon(birthday,days=7){
   return diff>=0&&diff<=days;
 }
 
+function bdayDaysLeft(birthday){
+  if(!birthday)return 999;
+  const today=new Date();const parts=birthday.split('-');
+  if(parts.length<3)return 999;
+  const bday=new Date(today.getFullYear(),parseInt(parts[1])-1,parseInt(parts[2]));
+  if(bday<today)bday.setFullYear(today.getFullYear()+1);
+  return Math.ceil((bday-today)/86400000);
+}
+
 function checkBirthdays(){
   const soon=contacts.filter(c=>isBirthdaySoon(c.birthday));
+  soon.sort((a,b)=>bdayDaysLeft(a.birthday)-bdayDaysLeft(b.birthday));
   const banner=document.getElementById('bday-banner');
   if(soon.length>0){
     banner.classList.add('show');
     document.getElementById('bday-list').innerHTML=soon.map(c=>{
       const p=c.birthday.split('-');
-      return `<div class="bday-banner-item">🎂 ${displayName(c)} ${c.title} — ${parseInt(p[1])}月${parseInt(p[2])}日</div>`;
+      const days=bdayDaysLeft(c.birthday);
+      const daysText=days===0?'今天！':days===1?'明天':` ${days} 天後`;
+      return `<div class="bday-banner-item">🎂 ${displayName(c)} ${c.title} — ${parseInt(p[1])}月${parseInt(p[2])}日（${daysText}）</div>`;
     }).join('');
   }
 }

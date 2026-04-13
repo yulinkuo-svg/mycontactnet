@@ -860,15 +860,14 @@ function checkDuplicates(){
         const meta = [c.company, c.job_title].filter(Boolean).join(' · ') || c.mobile1 || c.email1 || '無資料';
         const reasonBadge = reasons.length > 0
           ? `<div style="font-size:11px;color:var(--warning);margin-top:4px;">⚠️ ${reasons[0]}</div>` : '';
-        return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:var(--radius-sm);cursor:pointer;"
-          onclick="closeModal('dup-modal');openDetail('${c.id}')">
-          <div class="avatar" style="background:${bg};color:${fg};width:40px;height:40px;font-size:15px;">${av}</div>
-          <div style="flex:1;min-width:0;">
+        return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:var(--radius-sm);">
+          <div class="avatar" style="background:${bg};color:${fg};width:40px;height:40px;font-size:15px;flex-shrink:0;">${av}</div>
+          <div style="flex:1;min-width:0;cursor:pointer;" onclick="closeModal('dup-modal');openDetail('${c.id}')">
             <div style="font-size:14px;font-weight:500;">${displayName(c)}${c.title?' '+c.title:''}</div>
             <div style="font-size:12px;color:var(--text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${meta}</div>
             ${reasonBadge}
           </div>
-          <div style="font-size:18px;color:var(--text3);">›</div>
+          <button onclick="dupDelete('${c.id}','${c.rowIndex}',this)" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;border:1px solid var(--danger);background:transparent;color:var(--danger);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
         </div>`;
       }).join('');
       return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
@@ -878,6 +877,23 @@ function checkDuplicates(){
     }).join('');
   }
   openModal('dup-modal');
+}
+
+async function dupDelete(id, rowIndex, btn){
+  if(!confirm(`確定要刪除這筆聯絡人嗎？`)) return;
+  btn.textContent='…'; btn.disabled=true;
+  try{
+    await sheetsDeleteRow(parseInt(rowIndex));
+    // remove from local contacts array
+    const idx=contacts.findIndex(c=>c.id===id);
+    if(idx>-1) contacts.splice(idx,1);
+    // remove the card row from UI
+    btn.closest('div[style*="background:var(--bg3)"]').remove();
+    showToast('已刪除');
+  }catch(err){
+    btn.textContent='✕'; btn.disabled=false;
+    showToast('刪除失敗，請重試');
+  }
 }
 
 let toastTimer;

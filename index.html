@@ -456,7 +456,7 @@ async function getSheetId(){
 
 async function ensureHeaders(){
   const d=await sheetsGet('contacts!A1:Y1');
-  if(!d.values||d.values.length===0) await sheetsUpdate('contacts!A1:V1',[HEADERS]);
+  if(!d.values||d.values.length===0) await sheetsUpdate('contacts!A1:Y1',[HEADERS]);
 }
 
 async function loadContacts(){

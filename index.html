@@ -109,7 +109,7 @@
   <div class="login-logo">👥</div>
   <div>
     <div class="login-title" style="text-align:center">MyContactNet</div>
-    <div class="login-sub" style="margin-top:8px">你的私人人脈管理系統<br>登入後資料存在你自己的 Google Sheets</div>
+    <div class="login-sub" style="margin-top:8px">你的私人人脈管理系統</div>
   </div>
   <div id="google-btn-wrap"></div>
 </div>
@@ -683,13 +683,9 @@ function importVcf(input){
       const chunk=rows.slice(i,i+CHUNK);
       resultEl.textContent=`寫入中… ${Math.min(i+CHUNK,rows.length)} / ${rows.length} 筆`;
       try{
-          await sheetsAppend(`contacts!A:${COL_END}`, chunk);
-          written+=chunk.length;
-          console.log(`Chunk ${i} OK, written: ${written}`);
-        } catch(chunkErr){
-          console.error('Chunk error:', chunkErr);
-          failed+=chunk.length; continue;
-        }
+        await sheetsAppend(`contacts!A:${COL_END}`, chunk);
+        written+=chunk.length;
+        console.log(`Chunk ${i} OK, written: ${written}`);
       } catch(err){
         failed+=chunk.length;
         console.error('Chunk failed:',err);

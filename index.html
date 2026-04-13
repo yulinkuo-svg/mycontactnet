@@ -44,10 +44,7 @@
   .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:60px 40px;color:var(--text2);}
   .empty-state .icon{font-size:48px;}
   .empty-state p{text-align:center;font-size:15px;line-height:1.5;}
-  .bottom-nav{display:flex;background:var(--bg2);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom);flex-shrink:0;}
-  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;cursor:pointer;color:var(--text3);font-size:10px;transition:color 0.15s;border:none;background:none;}
-  .nav-item.active{color:var(--accent);}
-  .nav-icon{font-size:22px;}
+
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;display:none;align-items:flex-end;}
   .modal-overlay.open{display:flex;}
   .modal-sheet{width:100%;max-height:92vh;background:var(--bg2);border-radius:20px 20px 0 0;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom);}
@@ -72,10 +69,10 @@
   .detail-name{font-size:18px;font-weight:700;}
   .detail-nickname{font-size:12px;color:var(--text3);}
   .detail-sub{font-size:13px;color:var(--text2);}
-  .detail-actions{display:flex;background:var(--bg2);border-top:1px solid var(--border);padding:10px 0;padding-bottom:calc(10px + env(safe-area-inset-bottom));flex-shrink:0;}
-  .detail-action-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--text2);cursor:pointer;background:none;border:none;}
-  .detail-action-icon{width:40px;height:40px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;}
-  .detail-action-icon.line{background:#00B900;}
+  .detail-actions{display:flex;gap:12px;padding:12px 16px;flex-wrap:wrap;}
+  .detail-action-btn{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:var(--radius-sm);background:var(--bg3);border:none;color:var(--text);font-size:13px;cursor:pointer;}
+  .detail-action-icon{font-size:16px;}
+  .detail-action-icon.line{color:#00B900;}
   .detail-body{flex:1;overflow-y:auto;}
   .detail-body::-webkit-scrollbar{display:none;}
   .detail-section{padding:16px 20px;border-bottom:1px solid var(--border);}
@@ -118,7 +115,9 @@
   <div id="tab-contacts" style="display:flex;flex-direction:column;height:100%">
     <div class="topbar">
       <span class="topbar-title" id="contacts-title">聯絡人</span>
-      <button class="topbar-btn" onclick="checkDuplicates()" title="檢查重複">⚠️</button>
+      <button class="topbar-btn" onclick="switchToLine()" title="發訊息">💬</button>
+      <button class="topbar-btn" onclick="checkDuplicates()" title="檢查重複">🔍</button>
+      <button class="topbar-btn" onclick="switchToSettings()" title="設定">⚙️</button>
       <div style="position:relative;">
         <button class="topbar-btn accent" onclick="toggleAddMenu(event)">＋</button>
         <div id="add-menu" style="display:none;position:absolute;right:0;top:44px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:140px;z-index:200;overflow:hidden;">
@@ -147,7 +146,7 @@
   </div>
 
   <div id="tab-line" style="display:none;flex-direction:column;height:100%">
-    <div class="topbar"><span class="topbar-title">LINE 發訊息</span></div>
+    <div class="topbar"><button class="topbar-btn" onclick="switchToContacts()">👥</button><span class="topbar-title" style="flex:1">LINE 發訊息</span></div>
     <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;">
       <div style="font-size:13px;color:var(--text2);line-height:1.6;">選擇模板與聯絡人，App 自動帶入稱謂，點擊後跳轉到 LINE。</div>
       <div class="form-group">
@@ -176,7 +175,7 @@
   </div>
 
   <div id="tab-settings" style="display:none;flex-direction:column;height:100%">
-    <div class="topbar"><span class="topbar-title">設定</span></div>
+    <div class="topbar"><button class="topbar-btn" onclick="switchToContacts()">👥</button><span class="topbar-title" style="flex:1">設定</span></div>
     <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;">
       <div style="display:flex;align-items:center;gap:14px;padding:16px;background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);">
         <div style="width:48px;height:48px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:20px;">👤</div>
@@ -199,11 +198,7 @@
     </div>
   </div>
 
-  <div class="bottom-nav">
-    <button class="nav-item active" onclick="switchTab('contacts',this)" id="nav-contacts"><span class="nav-icon">👥</span>聯絡人</button>
-    <button class="nav-item" onclick="switchTab('line',this)" id="nav-line"><span class="nav-icon">💬</span>LINE 發送</button>
-    <button class="nav-item" onclick="switchTab('settings',this)" id="nav-settings"><span class="nav-icon">⚙️</span>設定</button>
-  </div>
+
 </div>
 
 <!-- Add/Edit Modal -->
@@ -226,6 +221,7 @@
         <div class="form-group"><div class="form-label">稱謂</div><input class="form-input" id="f-title" placeholder="先生／小姐"></div>
       </div>
       <div class="form-group"><div class="form-label">公司</div><input class="form-input" id="f-company" placeholder="公司名稱"></div>
+      <div class="form-group"><div class="form-label">部門</div><input class="form-input" id="f-department" placeholder="業務部／工程部"></div>
       <div class="form-group"><div class="form-label">職稱</div><input class="form-input" id="f-jobtitle" placeholder="總監／工程師"></div>
 
       <div class="form-section-title">電話</div>
@@ -240,6 +236,8 @@
       <div class="form-group"><div class="form-label">Email（主要）</div><input class="form-input" id="f-email1" placeholder="email@example.com" type="email"></div>
       <div class="form-group"><div class="form-label">Email（次要）</div><input class="form-input" id="f-email2" placeholder="email2@example.com" type="email"></div>
       <div class="form-group"><div class="form-label">LINE ID</div><input class="form-input" id="f-line-id" placeholder="line_id_here"></div>
+      <div class="form-group"><div class="form-label">公司地址</div><input class="form-input" id="f-work-address" placeholder="台北市信義區信義路五段7號"></div>
+      <div class="form-group"><div class="form-label">住家地址</div><input class="form-input" id="f-home-address" placeholder="台北市大安區忠孝東路四段1號"></div>
 
       <div class="form-section-title">其他</div>
       <div class="form-group"><div class="form-label">生日</div><input class="form-input" id="f-birthday" type="date"></div>
@@ -294,9 +292,9 @@
     </div>
   </div>
   <div class="detail-actions">
-    <button class="detail-action-btn" onclick="callContact()"><div class="detail-action-icon">📞</div>電話</button>
-    <button class="detail-action-btn" onclick="mailContact()"><div class="detail-action-icon">✉️</div>Email</button>
-    <button class="detail-action-btn" onclick="lineContact()"><div class="detail-action-icon line">💬</div>LINE</button>
+    <button class="detail-action-btn" onclick="callContact()"><span class="detail-action-icon">📞</span>電話</button>
+    <button class="detail-action-btn" onclick="mailContact()"><span class="detail-action-icon">✉️</span>Email</button>
+    <button class="detail-action-btn" onclick="lineContact()"><span class="detail-action-icon line">💬</span>LINE 傳訊</button>
   </div>
 </div>
 
@@ -306,7 +304,7 @@
   <div class="modal-sheet" style="max-height:88vh">
     <div class="modal-handle"></div>
     <div class="modal-header">
-      <span class="modal-title">⚠️ 重複聯絡人檢查</span>
+      <span class="modal-title">🔍 重複聯絡人檢查</span>
       <button class="modal-close" onclick="closeModal('dup-modal')">×</button>
     </div>
     <div id="dup-body" style="padding:16px 20px 32px;display:flex;flex-direction:column;gap:16px;"></div>
@@ -318,14 +316,22 @@
 const CLIENT_ID='1005979329572-3epolpql13pr0p5h0t2tfumrmo7u313d.apps.googleusercontent.com';
 const SHEET_ID='1sO8FdI2N4J4uSHsbiG2wu4Xvq38WnAs2cCvmgVmkyyk';
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
-const HEADERS=['id','last_name','first_name','nickname','title','company','job_title','mobile1','mobile2','office','home','email1','email2','line_id','birthday','tags','notes','created_at','source'];
-const COL_END='S';
+const HEADERS=['id','last_name','first_name','nickname','title','company','department','job_title','mobile1','mobile2','office','home','email1','email2','line_id','work_address','home_address','birthday','tags','notes','created_at','source'];
+const COL_END='V';
 
 let accessToken=null,contacts=[],currentTag='',currentContact=null,tokenClient=null;
 
 const COLORS=[['#3b1fa8','#a78bfa'],['#0f4c3a','#5eead4'],['#7c1d1d','#fca5a5'],['#1a3a5c','#93c5fd'],['#4a2c00','#fcd34d'],['#2d1f5e','#c084fc']];
 function getColor(s){return COLORS[(s.charCodeAt(0)||65)%COLORS.length];}
-function displayName(c){return [c.last_name,c.first_name].filter(Boolean).join('')||c.nickname||'（無名稱）';}
+function isCJKName(s){return /[\u4e00-\u9fff]/.test(s);}
+function displayName(c){
+  const last=c.last_name||'', first=c.first_name||'';
+  if(!last&&!first) return c.nickname||'（無名稱）';
+  // 中文姓名：姓+名（不加空格）
+  if(isCJKName(last)||isCJKName(first)) return [last,first].filter(Boolean).join('');
+  // 英文姓名：名 姓（空格分隔）
+  return [first,last].filter(Boolean).join(' ');
+}
 function fullName(c){return displayName(c)+(c.nickname?' '+c.nickname:'');}
 function isChinese(s){return /[\u4e00-\u9fff]/.test(s);}
 function avatarText(c){
@@ -436,11 +442,12 @@ async function loadContacts(){
       if(!row[0]) return;
       contacts.push({
         id:row[0],last_name:row[1]||'',first_name:row[2]||'',nickname:row[3]||'',
-        title:row[4]||'',company:row[5]||'',job_title:row[6]||'',
-        mobile1:row[7]||'',mobile2:row[8]||'',office:row[9]||'',home:row[10]||'',
-        email1:row[11]||'',email2:row[12]||'',line_id:row[13]||'',
-        birthday:row[14]||'',tags:row[15]||'',notes:row[16]||'',
-        created_at:row[17]||'',source:row[18]||'',rowIndex:i+2
+        title:row[4]||'',company:row[5]||'',department:row[6]||'',job_title:row[7]||'',
+        mobile1:row[8]||'',mobile2:row[9]||'',office:row[10]||'',home:row[11]||'',
+        email1:row[12]||'',email2:row[13]||'',line_id:row[14]||'',
+        work_address:row[15]||'',home_address:row[16]||'',
+        birthday:row[17]||'',tags:row[18]||'',notes:row[19]||'',
+        created_at:row[20]||'',source:row[21]||'',rowIndex:i+2
       });
     });
   }
@@ -461,7 +468,7 @@ function renderContacts(list){
       <div class="avatar" style="background:${bg};color:${fg}">${initials}</div>
       <div class="contact-info">
         <div class="contact-name">${displayName(c)}${c.title?' '+c.title:''}${nick}</div>
-        <div class="contact-meta">${[c.company,c.job_title].filter(Boolean).join(' · ')||c.mobile1||c.email1||'無資料'}</div>
+        <div class="contact-meta">${[c.company,c.department,c.job_title].filter(Boolean).join(' · ')||c.mobile1||c.email1||'無資料'}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;max-width:90px;">
         ${bday?'<div class="bday-badge">🎂 生日</div>':''}
@@ -531,7 +538,7 @@ function filterContacts(q){
   if(q){
     const lq=q.toLowerCase();
     list=list.filter(c=>[
-      displayName(c),c.nickname,c.title,c.company,c.job_title,
+      displayName(c),c.nickname,c.title,c.company,c.department,c.job_title,c.work_address,c.home_address,
       c.mobile1,c.mobile2,c.office,c.home,
       c.email1,c.email2,c.line_id,c.tags,c.notes,c.birthday
     ].some(v=>(v||'').toLowerCase().includes(lq)));
@@ -555,7 +562,7 @@ function openDetail(id){
   document.getElementById('detail-avatar').textContent=initials;
   document.getElementById('detail-name').textContent=displayName(c)+(c.title?' '+c.title:'');
   document.getElementById('detail-nickname').textContent=c.nickname?`「${c.nickname}」`:'';
-  document.getElementById('detail-sub').textContent=[c.company,c.job_title].filter(Boolean).join(' · ');
+  document.getElementById('detail-sub').textContent=[c.company,c.department,c.job_title].filter(Boolean).join(' · ');
   const fields=[];
   if(c.mobile1)fields.push(['📞 行動電話',c.mobile1]);
   if(c.mobile2)fields.push(['📞 行動電話（次）',c.mobile2]);
@@ -564,6 +571,8 @@ function openDetail(id){
   if(c.email1)fields.push(['✉️ Email',c.email1]);
   if(c.email2)fields.push(['✉️ Email（次）',c.email2]);
   if(c.line_id)fields.push(['💬 LINE ID',c.line_id]);
+  if(c.work_address)fields.push(['🏢 公司地址',c.work_address]);
+  if(c.home_address)fields.push(['🏠 住家地址',c.home_address]);
   if(c.birthday){const p=c.birthday.split('-');fields.push(['🎂 生日',`${parseInt(p[1])}月${parseInt(p[2])}日`]);}
   if(c.tags)fields.push(['🏷️ 標籤',formatTags(c.tags)]);
   document.getElementById('detail-fields').innerHTML='<div class="detail-section-title">聯絡資訊</div>'+
@@ -594,7 +603,7 @@ function closeAddMenu(){
 document.addEventListener('click',()=>closeAddMenu());
 
 function clearForm(){
-  ['last-name','first-name','nickname','title','company','jobtitle','mobile1','mobile2','office','home','email1','email2','line-id','birthday','tags','notes']
+  ['last-name','first-name','nickname','title','company','department','jobtitle','mobile1','mobile2','office','home','email1','email2','line-id','work-address','home-address','birthday','tags','notes']
   .forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value='';});
 }
 
@@ -614,6 +623,7 @@ function openEdit(c){
   document.getElementById('f-nickname').value=c.nickname;
   document.getElementById('f-title').value=c.title;
   document.getElementById('f-company').value=c.company;
+  document.getElementById('f-department').value=c.department;
   document.getElementById('f-jobtitle').value=c.job_title;
   document.getElementById('f-mobile1').value=c.mobile1;
   document.getElementById('f-mobile2').value=c.mobile2;
@@ -622,6 +632,8 @@ function openEdit(c){
   document.getElementById('f-email1').value=c.email1;
   document.getElementById('f-email2').value=c.email2;
   document.getElementById('f-line-id').value=c.line_id;
+  document.getElementById('f-work-address').value=c.work_address;
+  document.getElementById('f-home-address').value=c.home_address;
   document.getElementById('f-birthday').value=c.birthday;
   document.getElementById('f-tags').value=c.tags;
   document.getElementById('f-notes').value=c.notes;
@@ -635,6 +647,7 @@ function getRow(id,created_at,source){
     document.getElementById('f-nickname').value.trim(),
     document.getElementById('f-title').value.trim(),
     document.getElementById('f-company').value.trim(),
+    document.getElementById('f-department').value.trim(),
     document.getElementById('f-jobtitle').value.trim(),
     document.getElementById('f-mobile1').value.trim(),
     document.getElementById('f-mobile2').value.trim(),
@@ -643,6 +656,8 @@ function getRow(id,created_at,source){
     document.getElementById('f-email1').value.trim(),
     document.getElementById('f-email2').value.trim(),
     document.getElementById('f-line-id').value.trim(),
+    document.getElementById('f-work-address').value.trim(),
+    document.getElementById('f-home-address').value.trim(),
     document.getElementById('f-birthday').value,
     document.getElementById('f-tags').value.trim(),
     document.getElementById('f-notes').value.trim(),
@@ -716,17 +731,31 @@ function importVcf(input){
       const emails=[];
       for(const m of card.matchAll(/EMAIL[^:]*:([^\r\n]+)/gi))emails.push(m[1].trim());
 
-      const org=(get('ORG')||'').split(';')[0].trim();
+      const orgFull=(get('ORG')||'');
+      const org=orgFull.split(';')[0].trim();
+      const department=orgFull.split(';')[1]?.trim()||'';
       const jobTitle=get('TITLE')||'';
       const nickname=get('NICKNAME')||'';
       const note=(get('NOTE')||'').replace(/\\n/g,'\n').replace(/\\,/g,',').trim();
       const bday=(()=>{const m=card.match(/BDAY[^:]*:(\d{4}-?\d{2}-?\d{2})/i);return m?m[1].replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3'):'';})();
 
+      // Parse addresses
+      const parseAddr=(raw)=>{
+        if(!raw)return'';
+        const p=raw.split(';');
+        return[p[2]||'',p[3]||'',p[4]||'',p[6]||''].filter(Boolean).join(', ').replace(/\\,/g,',');
+      };
+      const workAdrMatch=card.match(/(?:ITEM\d+\.)?ADR[^:]*WORK[^:]*:([^\r\n]+)/i);
+      const homeAdrMatch=card.match(/(?:ITEM\d+\.)?ADR[^:]*HOME[^:]*:([^\r\n]+)/i);
+      const workAddr=workAdrMatch?parseAddr(workAdrMatch[1]):'';
+      const homeAddr=homeAdrMatch?parseAddr(homeAdrMatch[1]):'';
+
       rows.push([
         'c_'+(Date.now()+parsed)+'_'+parsed,
-        finalLast,finalFirst,nickname,'',org,jobTitle,
+        finalLast,finalFirst,nickname,'',org,department,jobTitle,
         phones[0]||'',phones[1]||'','','',
         emails[0]||'',emails[1]||'','',
+        workAddr,homeAddr,
         bday,'',note,now,'vcf匯入'
       ]);
       parsed++;
@@ -815,11 +844,14 @@ function sendNextLine(tmpl){
   } else {setTimeout(()=>showToast('全部發送完成！'),500);}
 }
 
-function switchTab(tab,el){
-  ['contacts','line','settings'].forEach(t=>{document.getElementById('tab-'+t).style.display='none';document.getElementById('nav-'+t).classList.remove('active');});
-  document.getElementById('tab-'+tab).style.display='flex';el.classList.add('active');
+function switchTab(tab){
+  ['contacts','line','settings'].forEach(t=>{document.getElementById('tab-'+t).style.display='none';});
+  document.getElementById('tab-'+tab).style.display='flex';
   if(tab==='line')renderLineContacts();
 }
+function switchToContacts(){ switchTab('contacts'); }
+function switchToLine(){ switchTab('line'); }
+function switchToSettings(){ switchTab('settings'); }
 
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}

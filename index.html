@@ -680,15 +680,17 @@ function importVcf(input){
       resultEl.textContent=`寫入中… ${Math.min(i+CHUNK,rows.length)} / ${rows.length} 筆`;
       try{
         const resp=await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/contacts!A:${COL_END}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/contacts!A1:${COL_END}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
           {method:'POST',headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},
            body:JSON.stringify({values:chunk})}
         );
+        const respData=await resp.json();
+        console.log('Chunk',i,'response:',resp.status, JSON.stringify(respData).slice(0,200));
         if(!resp.ok){
           // token may have expired — try once more after short wait
           await new Promise(r=>setTimeout(r,1000));
           const resp2=await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/contacts!A:${COL_END}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/contacts!A1:${COL_END}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
             {method:'POST',headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},
              body:JSON.stringify({values:chunk})}
           );

@@ -666,19 +666,20 @@ function importVcf(input){
     console.log('VCF cards found:', cards.length);
     resultEl.textContent=`解析中，共 ${cards.length} 筆…`;
 
-    // Step 1: Parse all VCF cards into rows (pure JS, instant)
     const rows=[];
     const now=new Date().toLocaleString('zh-TW');
     let parsed=0;
+
     for(const card of cards){
       const get=(v)=>{const m=card.match(new RegExp('(?:^|\\r?\\n)'+v+'[^:]*:([^\\r\\n]+)'));return m?m[1].trim():'';};
       const fn=(get('FN')||'').trim();
-      // N field format: LastName;FirstName;;;
       const nMatch=card.match(/(?:^|\r?\n)N:([^\r\n]+)/);
       const nParts=nMatch?nMatch[1].split(';'):[];
       const lastName=(nParts[0]||'').trim();
       const firstName=(nParts[1]||'').trim();
+
       if(!fn&&!lastName&&!firstName)continue;
+
       let finalLast='',finalFirst='';
       if(lastName||firstName){
         finalLast=lastName;finalFirst=firstName;
@@ -687,18 +688,24 @@ function importVcf(input){
         if(isCJK(fn)){finalLast=fn[0];finalFirst=fn.slice(1);}
         else{const p=fn.trim().split(/\s+/);finalFirst=p.slice(0,-1).join(' ');finalLast=p[p.length-1]||'';}
       }
-      if(!finalLast&&!finalFirst&&!fn)continue;
-      // use fn as fallback display
-      if(!finalLast&&!finalFirst){finalFirst=fn;}
+      if(!finalLast&&!finalFirst)finalFirst=fn;
+
+      const phones=[];
+      for(const m of card.matchAll(/TEL[^:]*:([^\r\n]+)/gi))phones.push(m[1].trim());
+      const emails=[];
+      for(const m of card.matchAll(/EMAIL[^:]*:([^\r\n]+)/gi))emails.push(m[1].trim());
+
+      const org=(get('ORG')||'').split(';')[0].trim();
+      const jobTitle=get('TITLE')||'';
       const nickname=get('NICKNAME')||'';
-      const note=get('NOTE')||'';
-      const phones=[];for(const m of card.matchAll(/TEL[^:]*:([^\r\n]+)/gi))phones.push(m[1].trim());
-      const emails=[];for(const m of card.matchAll(/EMAIL[^:]*:([^\r\n]+)/gi))emails.push(m[1].trim());
-      const org=get('ORG');const jobTitle=get('TITLE');
+      const note=(get('NOTE')||'').replace(/\\n/g,'\n').replace(/\\,/g,',').trim();
       const bday=(()=>{const m=card.match(/BDAY[^:]*:(\d{4}-?\d{2}-?\d{2})/i);return m?m[1].replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3'):'';})();
+
       rows.push([
-        'c_'+(Date.now()+parsed)+'_'+parsed,finalLast,finalFirst,nickname,'',org,jobTitle,
-        phones[0]||'',phones[1]||'','','',emails[0]||'',emails[1]||'','',
+        'c_'+(Date.now()+parsed)+'_'+parsed,
+        finalLast,finalFirst,nickname,'',org,jobTitle,
+        phones[0]||'',phones[1]||'','','',
+        emails[0]||'',emails[1]||'','',
         bday,'',note,now,'vcf匯入'
       ]);
       parsed++;
@@ -707,29 +714,26 @@ function importVcf(input){
     console.log('Rows parsed:', rows.length, rows[0]);
     resultEl.textContent=`解析完成 ${rows.length} 筆，開始寫入…`;
 
-    // Step 2: Write in chunks of 100, with retry on failure
     const CHUNK=100;
-    let written=0;
-    let failed=0;
+    let written=0,failed=0;
     for(let i=0;i<rows.length;i+=CHUNK){
       const chunk=rows.slice(i,i+CHUNK);
       resultEl.textContent=`寫入中… ${Math.min(i+CHUNK,rows.length)} / ${rows.length} 筆`;
       try{
-        await sheetsAppend(`contacts!A:${COL_END}`, chunk);
+        await sheetsAppend(`contacts!A:${COL_END}`,chunk);
         written+=chunk.length;
         console.log(`Chunk ${i} OK, written: ${written}`);
-      } catch(err){
+      }catch(err){
         failed+=chunk.length;
         console.error('Chunk failed:',err);
       }
-      // small delay to avoid rate limiting
       await new Promise(r=>setTimeout(r,200));
     }
 
     if(failed>0){
-      resultEl.textContent=`⚠️ 完成！成功 ${written} 筆，失敗 ${failed} 筆（可再試一次）`;
-    } else {
-      resultEl.textContent=`✅ 成功匯入 ${written} 筆聯絡人！`;
+      resultEl.textContent=`⚠️ 完成！成功 ${written} 筆，失敗 ${failed} 筆`;
+    }else{
+      resultEl.textContent=`✅ 成功匯入 ${written} 筆！`;
     }
     loadContacts();
   };

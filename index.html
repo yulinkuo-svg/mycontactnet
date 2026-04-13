@@ -106,7 +106,7 @@
   <div class="login-logo">👥</div>
   <div>
     <div class="login-title" style="text-align:center">MyContactNet</div>
-    <div class="login-sub" style="margin-top:8px">你的私人人脈管理系統 <span style="font-size:11px;color:var(--text3);">v1.9</span></div>
+    <div class="login-sub" style="margin-top:8px">你的私人人脈管理系統 <span style="font-size:11px;color:var(--text3);">v2.0</span></div>
   </div>
   <div id="google-btn-wrap"></div>
 </div>
@@ -851,7 +851,9 @@ function importVcf(input){
         phones[0]||'',phones[1]||'','','',
         emails[0]||'',emails[1]||'','',
         workAddr,homeAddr,
-        bday,'',note,now,'vcf匯入'
+        bday,'',note,
+        '','','',
+        now,'vcf匯入'
       ]);
       parsed++;
     }

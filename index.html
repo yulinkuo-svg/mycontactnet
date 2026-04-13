@@ -107,6 +107,7 @@
   <div>
     <div class="login-title" style="text-align:center">MyContactNet</div>
     <div class="login-sub" style="margin-top:8px">你的私人人脈管理系統</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;">v1.8</div>
   </div>
   <div id="google-btn-wrap"></div>
 </div>
@@ -428,14 +429,14 @@ async function getSheetId(){
 }
 
 async function ensureHeaders(){
-  const d=await sheetsGet('contacts!A1:S1');
-  if(!d.values||d.values.length===0) await sheetsUpdate('contacts!A1:S1',[HEADERS]);
+  const d=await sheetsGet('contacts!A1:V1');
+  if(!d.values||d.values.length===0) await sheetsUpdate('contacts!A1:V1',[HEADERS]);
 }
 
 async function loadContacts(){
   document.getElementById('contact-list').innerHTML='<div class="loading"><div class="spinner"></div> 載入中…</div>';
   await ensureHeaders();
-  const d=await sheetsGet('contacts!A2:S3000');
+  const d=await sheetsGet('contacts!A2:V3000');
   contacts=[];
   if(d.values){
     d.values.forEach((row,i)=>{
@@ -740,13 +741,15 @@ function importVcf(input){
       const bday=(()=>{const m=card.match(/BDAY[^:]*:(\d{4}-?\d{2}-?\d{2})/i);return m?m[1].replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3'):'';})();
 
       // Parse addresses
+      // Unfold VCF folded lines before parsing addresses
+      const unfoldedCard = card.replace(/\r?\n[ \t]/g, '');
       const parseAddr=(raw)=>{
         if(!raw)return'';
-        const p=raw.replace(/\r?\n\s*/g,'').split(';');
-        return[p[2]||'',p[3]||'',p[4]||'',p[6]||''].filter(Boolean).join(', ').replace(/\\,/g,',');
+        const p=raw.replace(/\r?\n[ \t]/g,'').split(';');
+        return[p[2]||'',p[3]||'',p[4]||'',p[6]||''].filter(Boolean).join(', ').replace(/\\,/g,',').replace(/[\n\r]/g,' ').trim();
       };
-      const workAdrMatch=card.match(/(?:ITEM\d+\.)?ADR[^:]*WORK[^:]*:([^\r\n]+)/i);
-      const homeAdrMatch=card.match(/(?:ITEM\d+\.)?ADR[^:]*HOME[^:]*:([^\r\n]+)/i);
+      const workAdrMatch=unfoldedCard.match(/(?:ITEM\d+\.)?ADR[^:]*WORK[^:]*:([^\r\n]+)/i);
+      const homeAdrMatch=unfoldedCard.match(/(?:ITEM\d+\.)?ADR[^:]*HOME[^:]*:([^\r\n]+)/i);
       const workAddr=workAdrMatch?parseAddr(workAdrMatch[1]):'';
       const homeAddr=homeAdrMatch?parseAddr(homeAdrMatch[1]):'';
 

@@ -377,6 +377,33 @@ async function sheetsClear(range){
     {method:'POST',headers:{Authorization:`Bearer ${accessToken}`}});
 }
 
+async function sheetsDeleteRow(rowIndex){
+  // rowIndex is 1-based (row 1 = header), data starts at row 2
+  // Sheets API uses 0-based startIndex
+  const sheetId = await getSheetId();
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,{
+    method:'POST',
+    headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},
+    body:JSON.stringify({requests:[{
+      deleteDimension:{
+        range:{sheetId:sheetId,dimension:'ROWS',startIndex:rowIndex-1,endIndex:rowIndex}
+      }
+    }]})
+  });
+}
+
+let _sheetId = null;
+async function getSheetId(){
+  if(_sheetId!==null) return _sheetId;
+  const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?fields=sheets.properties`,
+    {headers:{Authorization:`Bearer ${accessToken}`}});
+  const d=await r.json();
+  // find sheet named 'contacts'
+  const sheet=d.sheets.find(s=>s.properties.title==='contacts');
+  _sheetId=sheet?sheet.properties.sheetId:0;
+  return _sheetId;
+}
+
 async function ensureHeaders(){
   const d=await sheetsGet('contacts!A1:S1');
   if(!d.values||d.values.length===0) await sheetsUpdate('contacts!A1:S1',[HEADERS]);
@@ -602,7 +629,7 @@ async function deleteContact(){
   const editId=document.getElementById('edit-id').value;
   const c=contacts.find(x=>x.id===editId);
   if(!c||!confirm(`確定要刪除「${displayName(c)}」嗎？`))return;
-  await sheetsClear(`contacts!A${c.rowIndex}:${COL_END}${c.rowIndex}`);
+  await sheetsDeleteRow(c.rowIndex);
   closeModal('contact-modal');showToast('已刪除');loadContacts();
 }
 
@@ -617,7 +644,7 @@ function importVcf(input){
     const cards=text.split(/BEGIN:VCARD/i).filter(s=>s.includes('END:VCARD'));
     resultEl.textContent=`解析中，共 ${cards.length} 筆…`;
 
-    // 1. Parse all cards into rows first (fast, no API calls)
+    // Step 1: Parse all VCF cards into rows (pure JS, instant)
     const rows=[];
     const now=new Date().toLocaleString('zh-TW');
     let parsed=0;
@@ -635,23 +662,52 @@ function importVcf(input){
       const org=get('ORG');const jobTitle=get('TITLE');
       const bday=(()=>{const m=card.match(/BDAY[^:]*:(\d{4}-?\d{2}-?\d{2})/i);return m?m[1].replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3'):'';})();
       rows.push([
-        'c_'+Date.now()+'_'+(parsed++),finalLast,finalFirst,'','',org,jobTitle,
+        'c_'+(Date.now()+parsed)+'_'+parsed,finalLast,finalFirst,'','',org,jobTitle,
         phones[0]||'',phones[1]||'','','',emails[0]||'',emails[1]||'','',
         bday,'','',now,'vcf匯入'
       ]);
+      parsed++;
     }
 
-    // 2. Batch write in chunks of 500 (Sheets API limit is generous but chunk to show progress)
-    const CHUNK=500;
+    resultEl.textContent=`解析完成 ${rows.length} 筆，開始寫入…`;
+
+    // Step 2: Write in chunks of 100, with retry on failure
+    const CHUNK=100;
     let written=0;
+    let failed=0;
     for(let i=0;i<rows.length;i+=CHUNK){
       const chunk=rows.slice(i,i+CHUNK);
       resultEl.textContent=`寫入中… ${Math.min(i+CHUNK,rows.length)} / ${rows.length} 筆`;
-      await sheetsAppend(`contacts!A:${COL_END}`,chunk);
-      written+=chunk.length;
+      try{
+        const resp=await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/contacts!A:${COL_END}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+          {method:'POST',headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},
+           body:JSON.stringify({values:chunk})}
+        );
+        if(!resp.ok){
+          // token may have expired — try once more after short wait
+          await new Promise(r=>setTimeout(r,1000));
+          const resp2=await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/contacts!A:${COL_END}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+            {method:'POST',headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},
+             body:JSON.stringify({values:chunk})}
+          );
+          if(!resp2.ok){failed+=chunk.length;continue;}
+        }
+        written+=chunk.length;
+      } catch(err){
+        failed+=chunk.length;
+        console.error('Chunk failed:',err);
+      }
+      // small delay to avoid rate limiting
+      await new Promise(r=>setTimeout(r,200));
     }
 
-    resultEl.textContent=`✅ 成功匯入 ${written} 筆聯絡人！`;
+    if(failed>0){
+      resultEl.textContent=`⚠️ 完成！成功 ${written} 筆，失敗 ${failed} 筆（可再試一次）`;
+    } else {
+      resultEl.textContent=`✅ 成功匯入 ${written} 筆聯絡人！`;
+    }
     loadContacts();
   };
   reader.readAsText(file,'UTF-8');

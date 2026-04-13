@@ -119,8 +119,14 @@
     <div class="topbar">
       <span class="topbar-title">聯絡人</span>
       <button class="topbar-btn" onclick="checkDuplicates()" title="檢查重複">⚠️</button>
-      <button class="topbar-btn" onclick="openImport()">📥</button>
-      <button class="topbar-btn accent" onclick="openAdd()">＋</button>
+      <div style="position:relative;">
+        <button class="topbar-btn accent" onclick="toggleAddMenu(event)">＋</button>
+        <div id="add-menu" style="display:none;position:absolute;right:0;top:44px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:140px;z-index:200;overflow:hidden;">
+          <div onclick="closeAddMenu();openAdd()" style="padding:12px 16px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">📋 手動加入</div>
+          <div onclick="closeAddMenu();openImport()" style="padding:12px 16px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">📥 批次匯入</div>
+          <div onclick="closeAddMenu();showToast('名片掃描即將推出！')" style="padding:12px 16px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:10px;color:var(--text2);" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">📷 掃描名片</div>
+        </div>
+      </div>
     </div>
     <div class="search-wrap">
       <input class="search-input" placeholder="搜尋姓名、暱稱、公司…" oninput="filterContacts(this.value)" id="search-input">
@@ -367,8 +373,11 @@ async function sheetsGet(range){
   return r.json();
 }
 async function sheetsAppend(range,values){
-  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+  const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
     {method:'POST',headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},body:JSON.stringify({values})});
+  const d=await r.json();
+  if(!r.ok) throw new Error(JSON.stringify(d));
+  return d;
 }
 async function sheetsUpdate(range,values){
   await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`,
@@ -552,6 +561,16 @@ function lineContact(){
   window.open(`line://msg/text/${msg}`,'_blank');
 }
 function editCurrentContact(){closeDetail();openEdit(currentContact);}
+
+function toggleAddMenu(e){
+  e.stopPropagation();
+  const m=document.getElementById('add-menu');
+  m.style.display=m.style.display==='none'?'block':'none';
+}
+function closeAddMenu(){
+  document.getElementById('add-menu').style.display='none';
+}
+document.addEventListener('click',()=>closeAddMenu());
 
 function clearForm(){
   ['last-name','first-name','nickname','title','company','jobtitle','mobile1','mobile2','office','home','email1','email2','line-id','birthday','tags','notes']

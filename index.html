@@ -672,13 +672,22 @@ function importVcf(input){
     let parsed=0;
     for(const card of cards){
       const get=(v)=>{const m=card.match(new RegExp(v+'[^:]*:([^\\r\\n]+)'));return m?m[1].trim():'';};
-      const nField=get('N');const nParts=nField.split(';');
+      const fn=(get('FN')||'').trim();
+      const nField=get('N'); const nParts=nField?nField.split(';'):[];
       const lastName=(nParts[0]||'').trim();
       const firstName=((nParts[1]||'').replace(/;.*/,'')).trim();
-      const fn=get('FN');
-      if(!lastName&&!firstName&&!fn)continue;
-      const finalLast=lastName||(fn?fn.split(' ')[0]:'');
-      const finalFirst=firstName||(fn&&fn.indexOf(' ')>-1?fn.slice(fn.indexOf(' ')+1):'');
+      // skip vCard version lines or empty
+      if(!fn&&!lastName&&!firstName)continue;
+      if(fn==='3.0'||fn==='4.0'||fn==='2.1')continue;
+      let finalLast='',finalFirst='';
+      if(lastName||firstName){
+        finalLast=lastName;finalFirst=firstName;
+      } else {
+        const isCJK=(s)=>/[\u4e00-\u9fff]/.test(s);
+        if(isCJK(fn)){finalLast=fn[0];finalFirst=fn.slice(1);}
+        else{const p=fn.split(' ');finalLast=p[0];finalFirst=p.slice(1).join(' ');}
+      }
+      if(!finalLast&&!finalFirst)continue;
       const phones=[];for(const m of card.matchAll(/TEL[^:]*:([^\r\n]+)/gi))phones.push(m[1].trim());
       const emails=[];for(const m of card.matchAll(/EMAIL[^:]*:([^\r\n]+)/gi))emails.push(m[1].trim());
       const org=get('ORG');const jobTitle=get('TITLE');

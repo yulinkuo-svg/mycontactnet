@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MyContactNet">
 <title>MyContactNet</title>
-<script>window.addEventListener("load", initGoogle);</script>
+
 <style>
   :root{--bg:#0f0f0f;--bg2:#1a1a1a;--bg3:#222;--border:#2e2e2e;--text:#f0f0f0;--text2:#888;--text3:#555;--accent:#7c6af7;--accent2:#5eead4;--danger:#f87171;--success:#4ade80;--warning:#fbbf24;--radius:12px;--radius-sm:8px;}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -362,7 +362,8 @@ function handleCredential(resp){
 }
 
 function googleLogin(){
-  const redirectUri=encodeURIComponent(window.location.origin+window.location.pathname);
+  // Always use the exact registered redirect URI
+  const redirectUri=encodeURIComponent('https://yulinkuo-svg.github.io/mycontactnet/');
   const scope=encodeURIComponent(SCOPES);
   const url=`https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&prompt=select_account`;
   window.location.href=url;
@@ -874,6 +875,9 @@ function checkDuplicates(){
 }
 
 let toastTimer;
+// Auto-init on page load
+window.addEventListener('load', initGoogle);
+
 function showToast(msg){
   const el=document.getElementById('toast');
   el.textContent=msg;el.classList.add('show');

@@ -736,13 +736,13 @@ function importVcf(input){
       const department=orgFull.split(';')[1]?.trim()||'';
       const jobTitle=get('TITLE')||'';
       const nickname=get('NICKNAME')||'';
-      const note=(get('NOTE')||'').replace(/\\n/g,'\n').replace(/\\,/g,',').trim();
+      const note=(get('NOTE')||'').replace(/\\n/g,' ').replace(/\n/g,' ').replace(/\r/g,' ').replace(/\\,/g,',').trim();
       const bday=(()=>{const m=card.match(/BDAY[^:]*:(\d{4}-?\d{2}-?\d{2})/i);return m?m[1].replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3'):'';})();
 
       // Parse addresses
       const parseAddr=(raw)=>{
         if(!raw)return'';
-        const p=raw.split(';');
+        const p=raw.replace(/\r?\n\s*/g,'').split(';');
         return[p[2]||'',p[3]||'',p[4]||'',p[6]||''].filter(Boolean).join(', ').replace(/\\,/g,',');
       };
       const workAdrMatch=card.match(/(?:ITEM\d+\.)?ADR[^:]*WORK[^:]*:([^\r\n]+)/i);

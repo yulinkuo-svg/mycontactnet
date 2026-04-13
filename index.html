@@ -306,6 +306,18 @@ const COLORS=[['#3b1fa8','#a78bfa'],['#0f4c3a','#5eead4'],['#7c1d1d','#fca5a5'],
 function getColor(s){return COLORS[(s.charCodeAt(0)||65)%COLORS.length];}
 function displayName(c){return [c.last_name,c.first_name].filter(Boolean).join('')||c.nickname||'（無名稱）';}
 function fullName(c){return displayName(c)+(c.nickname?' '+c.nickname:'');}
+function isChinese(s){return /[\u4e00-\u9fff]/.test(s);}
+function avatarText(c){
+  const first=c.first_name||'',last=c.last_name||'';
+  if(!first&&!last)return(c.nickname||'?')[0].toUpperCase();
+  if(isChinese(first))return first[0];
+  if(isChinese(last))return last[0];
+  return(first||last)[0].toUpperCase();
+}
+function formatTags(tags){
+  if(!tags)return'';
+  return tags.split(',').map(t=>t.trim()).filter(Boolean).map(t=>'#'+t).join('  ');
+}
 
 function initGoogle(){
   google.accounts.id.initialize({client_id:CLIENT_ID,callback:handleCredential,auto_select:false});
@@ -384,7 +396,7 @@ function renderContacts(list){
   const sorted=[...list].sort((a,b)=>displayName(a).localeCompare(displayName(b),'zh-TW'));
   el.innerHTML=sorted.map(c=>{
     const [bg,fg]=getColor(c.last_name||c.first_name||'A');
-    const initials=(c.last_name||'?')+(c.first_name?c.first_name[0]:'');
+    const initials=avatarText(c);
     const bday=isBirthdaySoon(c.birthday);
     const tag=c.tags?c.tags.split(',')[0].trim():'';
     const nick=c.nickname?` (${c.nickname})`:'';
@@ -446,7 +458,11 @@ function filterContacts(q){
   if(currentTag)list=list.filter(c=>c.tags&&c.tags.split(',').map(t=>t.trim()).includes(currentTag));
   if(q){
     const lq=q.toLowerCase();
-    list=list.filter(c=>displayName(c).toLowerCase().includes(lq)||(c.nickname||'').toLowerCase().includes(lq)||(c.company||'').toLowerCase().includes(lq)||(c.job_title||'').toLowerCase().includes(lq)||(c.email1||'').toLowerCase().includes(lq)||(c.mobile1||'').includes(lq));
+    list=list.filter(c=>[
+      displayName(c),c.nickname,c.title,c.company,c.job_title,
+      c.mobile1,c.mobile2,c.office,c.home,
+      c.email1,c.email2,c.line_id,c.tags,c.notes,c.birthday
+    ].some(v=>(v||'').toLowerCase().includes(lq)));
   }
   renderContacts(list);
 }
@@ -461,7 +477,7 @@ function openDetail(id){
   currentContact=contacts.find(c=>c.id===id);if(!currentContact)return;
   const c=currentContact;
   const [bg,fg]=getColor(c.last_name||c.first_name||'A');
-  const initials=(c.last_name||'?')+(c.first_name?c.first_name[0]:'');
+  const initials=avatarText(c);
   document.getElementById('detail-title').textContent=displayName(c);
   document.getElementById('detail-avatar').style.cssText=`background:${bg};color:${fg}`;
   document.getElementById('detail-avatar').textContent=initials;
@@ -477,7 +493,7 @@ function openDetail(id){
   if(c.email2)fields.push(['✉️ Email（次）',c.email2]);
   if(c.line_id)fields.push(['💬 LINE ID',c.line_id]);
   if(c.birthday){const p=c.birthday.split('-');fields.push(['🎂 生日',`${parseInt(p[1])}月${parseInt(p[2])}日`]);}
-  if(c.tags)fields.push(['🏷️ 標籤',c.tags]);
+  if(c.tags)fields.push(['🏷️ 標籤',formatTags(c.tags)]);
   document.getElementById('detail-fields').innerHTML='<div class="detail-section-title">聯絡資訊</div>'+
     fields.map(([l,v])=>`<div class="detail-row"><span class="detail-row-label">${l}</span><span class="detail-row-value">${v}</span></div>`).join('');
   if(c.notes){document.getElementById('detail-notes-section').style.display='block';document.getElementById('detail-notes').textContent=c.notes;}

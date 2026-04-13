@@ -423,7 +423,7 @@ async function ensureHeaders(){
 async function loadContacts(){
   document.getElementById('contact-list').innerHTML='<div class="loading"><div class="spinner"></div> 載入中…</div>';
   await ensureHeaders();
-  const d=await sheetsGet('contacts!A2:S1000');
+  const d=await sheetsGet('contacts!A2:S3000');
   contacts=[];
   if(d.values){
     d.values.forEach((row,i)=>{
@@ -457,7 +457,10 @@ function renderContacts(list){
         <div class="contact-name">${displayName(c)}${c.title?' '+c.title:''}${nick}</div>
         <div class="contact-meta">${[c.company,c.job_title].filter(Boolean).join(' · ')||c.mobile1||c.email1||'無資料'}</div>
       </div>
-      ${bday?'<div class="bday-badge">🎂 即將生日</div>':(tag?`<div class="contact-tag">${tag}</div>`:'')}
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;max-width:90px;">
+        ${bday?'<div class="bday-badge">🎂 生日</div>':''}
+        ${c.tags?c.tags.split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<div class="contact-tag">${t}</div>`).join(''):''}
+      </div>
     </div>`;
   }).join('');
 }

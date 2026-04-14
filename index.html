@@ -438,7 +438,15 @@ async function getSheetId(){
 
 async function ensureHeaders(){
   const d=await sheetsGet('contacts!A1:V1');
-  if(!d.values||d.values.length===0) await sheetsUpdate('contacts!A1:V1',[HEADERS]);
+  const existing=d.values&&d.values[0]?d.values[0]:[];
+  // Check if header matches exactly
+  const isCorrect=existing.length===HEADERS.length&&HEADERS.every((h,i)=>existing[i]===h);
+  if(!isCorrect){
+    // Clear row 1 and rewrite correct headers
+    await sheetsClear('contacts!A1:V1');
+    await sheetsUpdate('contacts!A1:V1',[HEADERS]);
+    console.log('Headers fixed:', HEADERS);
+  }
 }
 
 async function loadContacts(){

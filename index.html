@@ -106,7 +106,7 @@
   <div class="login-logo">👥</div>
   <div>
     <div class="login-title" style="text-align:center">MyContactNet</div>
-    <div class="login-sub" style="margin-top:8px">你的私人人脈管理系統 <span style="font-size:11px;color:var(--text3);">v2.0</span></div>
+    <div class="login-sub" style="margin-top:8px">你的私人人脈管理系統 <span style="font-size:11px;color:var(--text3);">v2.1</span></div>
   </div>
   <div id="google-btn-wrap"></div>
 </div>
@@ -220,10 +220,7 @@
         <div class="form-group"><div class="form-label">姓 *</div><input class="form-input" id="f-last-name" placeholder="陳"></div>
         <div class="form-group"><div class="form-label">名 *</div><input class="form-input" id="f-first-name" placeholder="小明"></div>
       </div>
-      <div class="form-row">
-        <div class="form-group"><div class="form-label">暱稱</div><input class="form-input" id="f-nickname" placeholder="小明"></div>
-        <div class="form-group"><div class="form-label">稱謂</div><input class="form-input" id="f-title" placeholder="先生／小姐"></div>
-      </div>
+      <div class="form-group"><div class="form-label">暱稱</div><input class="form-input" id="f-nickname" placeholder="小明"></div>
       <div class="form-group"><div class="form-label">公司</div><input class="form-input" id="f-company" placeholder="公司名稱"></div>
       <div class="form-group"><div class="form-label">部門</div><input class="form-input" id="f-department" placeholder="業務部／工程部"></div>
       <div class="form-group"><div class="form-label">職稱</div><input class="form-input" id="f-jobtitle" placeholder="總監／工程師"></div>
@@ -249,23 +246,8 @@
       <div class="form-group"><div class="form-label">備註</div><textarea class="form-input" id="f-notes" rows="3" placeholder="在哪裡認識、備忘事項…" style="resize:none"></textarea></div>
 
       <div class="form-section-title">人脈管理</div>
-      <div class="form-group">
-        <div class="form-label">關係強度</div>
-        <select class="form-input" id="f-relationship">
-          <option value="">未設定</option>
-          <option value="熟識">熟識</option>
-          <option value="普通">普通</option>
-          <option value="點頭之交">點頭之交</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <div class="form-label">介紹人</div>
-        <div style="position:relative;">
-          <input class="form-input" id="f-referred-by" placeholder="搜尋聯絡人…" oninput="searchReferrer(this.value)" autocomplete="off">
-          <input type="hidden" id="f-referred-by-id">
-          <div id="referrer-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);z-index:300;max-height:160px;overflow-y:auto;"></div>
-        </div>
-      </div>
+
+
       <div class="form-group">
         <div class="form-label">下次跟進日期</div>
         <input class="form-input" id="f-next-followup" type="date">
@@ -343,8 +325,8 @@
 const CLIENT_ID='1005979329572-3epolpql13pr0p5h0t2tfumrmo7u313d.apps.googleusercontent.com';
 const SHEET_ID='1sO8FdI2N4J4uSHsbiG2wu4Xvq38WnAs2cCvmgVmkyyk';
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
-const HEADERS=['id','last_name','first_name','nickname','title','company','department','job_title','mobile1','mobile2','office','home','email1','email2','line_id','work_address','home_address','birthday','tags','notes','relationship','referred_by','next_followup','created_at','source'];
-const COL_END='Y';
+const HEADERS=['id','last_name','first_name','nickname','company','department','job_title','mobile1','mobile2','office','home','email1','email2','line_id','work_address','home_address','birthday','categories','notes','next_followup','created_at','source'];
+const COL_END='U';
 
 let accessToken=null,contacts=[],currentTag='',currentContact=null,tokenClient=null;
 
@@ -455,27 +437,27 @@ async function getSheetId(){
 }
 
 async function ensureHeaders(){
-  const d=await sheetsGet('contacts!A1:Y1');
-  if(!d.values||d.values.length===0) await sheetsUpdate('contacts!A1:Y1',[HEADERS]);
+  const d=await sheetsGet('contacts!A1:U1');
+  if(!d.values||d.values.length===0) await sheetsUpdate('contacts!A1:U1',[HEADERS]);
 }
 
 async function loadContacts(){
   document.getElementById('contact-list').innerHTML='<div class="loading"><div class="spinner"></div> 載入中…</div>';
   await ensureHeaders();
-  const d=await sheetsGet('contacts!A2:Y3000');
+  const d=await sheetsGet('contacts!A2:U3000');
   contacts=[];
   if(d.values){
     d.values.forEach((row,i)=>{
       if(!row[0]) return;
       contacts.push({
         id:row[0],last_name:row[1]||'',first_name:row[2]||'',nickname:row[3]||'',
-        title:row[4]||'',company:row[5]||'',department:row[6]||'',job_title:row[7]||'',
-        mobile1:row[8]||'',mobile2:row[9]||'',office:row[10]||'',home:row[11]||'',
-        email1:row[12]||'',email2:row[13]||'',line_id:row[14]||'',
-        work_address:row[15]||'',home_address:row[16]||'',
-        birthday:row[17]||'',tags:row[18]||'',notes:row[19]||'',
-        relationship:row[20]||'',referred_by:row[21]||'',next_followup:row[22]||'',
-        created_at:row[23]||'',source:row[24]||'',rowIndex:i+2
+        company:row[4]||'',department:row[5]||'',job_title:row[6]||'',
+        mobile1:row[7]||'',mobile2:row[8]||'',office:row[9]||'',home:row[10]||'',
+        email1:row[11]||'',email2:row[12]||'',line_id:row[13]||'',
+        work_address:row[14]||'',home_address:row[15]||'',
+        birthday:row[16]||'',categories:row[17]||'',notes:row[18]||'',
+        next_followup:row[19]||'',
+        created_at:row[20]||'',source:row[21]||'',rowIndex:i+2
       });
     });
   }
@@ -490,7 +472,7 @@ function renderContacts(list){
     const [bg,fg]=getColor(c.last_name||c.first_name||'A');
     const initials=avatarText(c);
     const bday=isBirthdaySoon(c.birthday);
-    const tag=c.tags?c.tags.split(',')[0].trim():'';
+    const tag=c.categories?c.categories.split(',')[0].trim():'';
     const nick=c.nickname?` (${c.nickname})`:'';
     return `<div class="contact-item" onclick="openDetail('${c.id}')">
       <div class="avatar" style="background:${bg};color:${fg}">${initials}</div>
@@ -501,7 +483,7 @@ function renderContacts(list){
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;max-width:90px;">
         ${bday?'<div class="bday-badge">🎂 生日</div>':''}
         ${c.relationship?`<div class="contact-tag" style="${c.relationship==='熟識'?'background:#0f4c3a;color:#5eead4':c.relationship==='點頭之交'?'background:#2c2c2a;color:#888780':''}">${c.relationship}</div>`:''}
-        ${c.tags?c.tags.split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<div class="contact-tag">${t}</div>`).join(''):''}
+        ${c.categories?c.categories.split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<div class="contact-tag">${t}</div>`).join(''):''}
       </div>
     </div>`;
   }).join('');
@@ -509,7 +491,7 @@ function renderContacts(list){
 
 function renderTagFilter(){
   const allTags=new Set();
-  contacts.forEach(c=>{if(c.tags)c.tags.split(',').forEach(t=>{const tr=t.trim();if(tr)allTags.add(tr);});});
+  contacts.forEach(c=>{if(c.categories)c.categories.split(',').forEach(t=>{const tr=t.trim();if(tr)allTags.add(tr);});});
   const el=document.getElementById('tag-filter');
   el.innerHTML='<div class="tag-chip active" onclick="filterByTag(\'\',this)">全部</div>';
   allTags.forEach(t=>{el.innerHTML+=`<div class="tag-chip" onclick="filterByTag('${t}',this)">${t}</div>`;});
@@ -519,7 +501,7 @@ function updateStats(){
   document.getElementById('stat-total').textContent=contacts.length;
   const allTags=new Set();let bdayCount=0;
   contacts.forEach(c=>{
-    if(c.tags)c.tags.split(',').forEach(t=>{const tr=t.trim();if(tr)allTags.add(tr);});
+    if(c.categories)c.categories.split(',').forEach(t=>{const tr=t.trim();if(tr)allTags.add(tr);});
     if(isBirthdaySoon(c.birthday))bdayCount++;
   });
   document.getElementById('stat-bday').textContent=bdayCount;
@@ -563,13 +545,13 @@ function checkBirthdays(){
 
 function filterContacts(q){
   let list=contacts;
-  if(currentTag)list=list.filter(c=>c.tags&&c.tags.split(',').map(t=>t.trim()).includes(currentTag));
+  if(currentTag)list=list.filter(c=>c.categories&&c.categories.split(',').map(t=>t.trim()).includes(currentTag));
   if(q){
     const lq=q.toLowerCase();
     list=list.filter(c=>[
-      displayName(c),c.nickname,c.title,c.company,c.department,c.job_title,c.work_address,c.home_address,c.referred_by,c.relationship,
+      displayName(c),c.nickname,c.company,c.department,c.job_title,c.work_address,c.home_address,c.categories,c.categories,
       c.mobile1,c.mobile2,c.office,c.home,
-      c.email1,c.email2,c.line_id,c.tags,c.notes,c.birthday
+      c.email1,c.email2,c.line_id,c.categories,c.notes,c.birthday
     ].some(v=>(v||'').toLowerCase().includes(lq)));
   }
   renderContacts(list);
@@ -589,7 +571,7 @@ function openDetail(id){
   document.getElementById('detail-title').textContent=displayName(c);
   document.getElementById('detail-avatar').style.cssText=`background:${bg};color:${fg}`;
   document.getElementById('detail-avatar').textContent=initials;
-  document.getElementById('detail-name').textContent=displayName(c)+(c.title?' '+c.title:'');
+  document.getElementById('detail-name').textContent=displayName(c);
   document.getElementById('detail-nickname').textContent=c.nickname?`「${c.nickname}」`:'';
   document.getElementById('detail-sub').textContent=[c.company,c.department,c.job_title].filter(Boolean).join(' · ');
   const fields=[];
@@ -603,9 +585,8 @@ function openDetail(id){
   if(c.work_address)fields.push(['🏢 公司地址',c.work_address]);
   if(c.home_address)fields.push(['🏠 住家地址',c.home_address]);
   if(c.birthday){const p=c.birthday.split('-');fields.push(['🎂 生日',`${parseInt(p[1])}月${parseInt(p[2])}日`]);}
-  if(c.tags)fields.push(['🏷️ 標籤',formatTags(c.tags)]);
-  if(c.relationship)fields.push(['💪 關係強度',c.relationship]);
-  if(c.referred_by)fields.push(['🤝 介紹人',c.referred_by]);
+  if(c.categories)fields.push(['🏷️ 關係',formatTags(c.categories)]);
+
   if(c.next_followup){const p=c.next_followup.split('-');fields.push(['📅 下次跟進',`${parseInt(p[1])}月${parseInt(p[2])}日`]);}
   document.getElementById('detail-fields').innerHTML='<div class="detail-section-title">聯絡資訊</div>'+
     fields.map(([l,v])=>`<div class="detail-row"><span class="detail-row-label">${l}</span><span class="detail-row-value">${v}</span></div>`).join('');
@@ -624,29 +605,7 @@ function lineContact(){
 }
 function editCurrentContact(){closeDetail();openEdit(currentContact);}
 
-function searchReferrer(q){
-  const dd=document.getElementById('referrer-dropdown');
-  if(!q){dd.style.display='none';return;}
-  const lq=q.toLowerCase();
-  const matches=contacts.filter(c=>displayName(c).toLowerCase().includes(lq)).slice(0,6);
-  if(matches.length===0){dd.style.display='none';return;}
-  dd.style.display='block';
-  dd.innerHTML=matches.map(c=>`
-    <div onclick="selectReferrer('${c.id}','${displayName(c)}')"
-      style="padding:10px 14px;font-size:14px;cursor:pointer;border-bottom:1px solid var(--border);"
-      onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
-      ${displayName(c)}${c.title?' '+c.title:''} <span style="font-size:12px;color:var(--text2);">${c.company||''}</span>
-    </div>`).join('');
-}
-function selectReferrer(id, name){
-  document.getElementById('f-referred-by').value=name;
-  document.getElementById('f-referred-by-id').value=id;
-  document.getElementById('referrer-dropdown').style.display='none';
-}
-document.addEventListener('click',(e)=>{
-  if(!e.target.closest('#referrer-dropdown')&&e.target.id!=='f-referred-by')
-    document.getElementById('referrer-dropdown').style.display='none';
-});
+
 
 function checkFollowups(){
   const today=new Date();
@@ -689,7 +648,7 @@ function closeAddMenu(){
 document.addEventListener('click',()=>closeAddMenu());
 
 function clearForm(){
-  ['last-name','first-name','nickname','title','company','department','jobtitle','mobile1','mobile2','office','home','email1','email2','line-id','work-address','home-address','birthday','tags','notes','next-followup']
+  ['last-name','first-name','nickname','company','department','jobtitle','mobile1','mobile2','office','home','email1','email2','line-id','work-address','home-address','birthday','categories','notes','next-followup']
   .forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value='';});
 }
 
@@ -707,7 +666,6 @@ function openEdit(c){
   document.getElementById('f-last-name').value=c.last_name;
   document.getElementById('f-first-name').value=c.first_name;
   document.getElementById('f-nickname').value=c.nickname;
-  document.getElementById('f-title').value=c.title;
   document.getElementById('f-company').value=c.company;
   document.getElementById('f-department').value=c.department;
   document.getElementById('f-jobtitle').value=c.job_title;
@@ -721,11 +679,8 @@ function openEdit(c){
   document.getElementById('f-work-address').value=c.work_address;
   document.getElementById('f-home-address').value=c.home_address;
   document.getElementById('f-birthday').value=c.birthday;
-  document.getElementById('f-tags').value=c.tags;
+  document.getElementById('f-categories').value=c.categories;
   document.getElementById('f-notes').value=c.notes;
-  document.getElementById('f-relationship').value=c.relationship||'';
-  document.getElementById('f-referred-by').value=c.referred_by||'';
-  document.getElementById('f-referred-by-id').value='';
   document.getElementById('f-next-followup').value=c.next_followup||'';
   openModal('contact-modal');
 }
@@ -735,7 +690,6 @@ function getRow(id,created_at,source){
     document.getElementById('f-last-name').value.trim(),
     document.getElementById('f-first-name').value.trim(),
     document.getElementById('f-nickname').value.trim(),
-    document.getElementById('f-title').value.trim(),
     document.getElementById('f-company').value.trim(),
     document.getElementById('f-department').value.trim(),
     document.getElementById('f-jobtitle').value.trim(),
@@ -749,10 +703,8 @@ function getRow(id,created_at,source){
     document.getElementById('f-work-address').value.trim(),
     document.getElementById('f-home-address').value.trim(),
     document.getElementById('f-birthday').value,
-    document.getElementById('f-tags').value.trim(),
+    document.getElementById('f-categories').value.trim(),
     document.getElementById('f-notes').value.trim(),
-    document.getElementById('f-relationship').value,
-    document.getElementById('f-referred-by').value.trim(),
     document.getElementById('f-next-followup').value,
     created_at,source
   ];
@@ -830,6 +782,10 @@ function importVcf(input){
       const jobTitle=get('TITLE')||'';
       const nickname=get('NICKNAME')||'';
       const note=(get('NOTE')||'').replace(/\\n/g,' ').replace(/\n/g,' ').replace(/\r/g,' ').replace(/\\,/g,',').trim();
+      const categories=(get('CATEGORIES')||'').trim();
+      const nextFollowup=(get('X-FOLLOWUP')||'').trim();
+      const imppMatch=card.match(/IMPP[^:]*X-SERVICE-TYPE=LINE[^:]*:(?:line:)?([^\r\n]+)/i);
+      const lineIdFromImpp=imppMatch?imppMatch[1].trim():'';
       const bday=(()=>{const m=card.match(/BDAY[^:]*:(\d{4}-?\d{2}-?\d{2})/i);return m?m[1].replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3'):'';})();
 
       // Parse addresses
@@ -847,13 +803,12 @@ function importVcf(input){
 
       rows.push([
         'c_'+(Date.now()+parsed)+'_'+parsed,
-        finalLast,finalFirst,nickname,'',org,department,jobTitle,
+        finalLast,finalFirst,nickname,org,department,jobTitle,
         phones[0]||'',phones[1]||'','','',
-        emails[0]||'',emails[1]||'','',
+        emails[0]||'',emails[1]||'',lineIdFromImpp||lineId||'',
         workAddr,homeAddr,
-        bday,'',note,
-        '','','',
-        now,'vcf匯入'
+        bday,categories,note,
+        nextFollowup,now,'vcf匯入'
       ]);
       parsed++;
     }

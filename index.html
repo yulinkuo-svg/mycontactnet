@@ -326,7 +326,7 @@ const CLIENT_ID='1005979329572-3epolpql13pr0p5h0t2tfumrmo7u313d.apps.googleuserc
 const SHEET_ID='1sO8FdI2N4J4uSHsbiG2wu4Xvq38WnAs2cCvmgVmkyyk';
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
 const HEADERS=['id','last_name','first_name','nickname','company','department','job_title','mobile1','mobile2','office','home','email1','email2','line_id','work_address','home_address','birthday','categories','notes','next_followup','created_at','source'];
-const COL_END='U';
+const COL_END='V';
 
 let accessToken=null,contacts=[],currentTag='',currentContact=null,tokenClient=null;
 
@@ -437,14 +437,14 @@ async function getSheetId(){
 }
 
 async function ensureHeaders(){
-  const d=await sheetsGet('contacts!A1:U1');
-  if(!d.values||d.values.length===0) await sheetsUpdate('contacts!A1:U1',[HEADERS]);
+  const d=await sheetsGet('contacts!A1:V1');
+  if(!d.values||d.values.length===0) await sheetsUpdate('contacts!A1:V1',[HEADERS]);
 }
 
 async function loadContacts(){
   document.getElementById('contact-list').innerHTML='<div class="loading"><div class="spinner"></div> 載入中…</div>';
   await ensureHeaders();
-  const d=await sheetsGet('contacts!A2:U3000');
+  const d=await sheetsGet('contacts!A2:V3000');
   contacts=[];
   if(d.values){
     d.values.forEach((row,i)=>{
